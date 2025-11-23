@@ -7,6 +7,7 @@ export interface Property {
   bathrooms: number;
   area: string;
   images: string[];
+  panoramaUrl: string;
   description: string;
   features: string[];
   nearbyPlaces: {
@@ -34,6 +35,7 @@ export const dummyProperties: Property[] = [
       "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800",
       "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800",
     ],
+    panoramaUrl: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=2000",
     description: "Stunning modern apartment with city views, high ceilings, and premium finishes. Perfect for young professionals.",
     features: ["City Views", "Gym Access", "Parking", "24/7 Security", "Rooftop Pool"],
     nearbyPlaces: {
@@ -56,6 +58,7 @@ export const dummyProperties: Property[] = [
       "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800",
       "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800",
     ],
+    panoramaUrl: "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=2000",
     description: "Beautiful family home with large backyard, modern kitchen, and close to top-rated schools.",
     features: ["Large Backyard", "Modern Kitchen", "Garage", "Fireplace", "Hardwood Floors"],
     nearbyPlaces: {
@@ -78,6 +81,7 @@ export const dummyProperties: Property[] = [
       "https://images.unsplash.com/photo-1613977257363-707ba9348227?w=800",
       "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800",
     ],
+    panoramaUrl: "https://images.unsplash.com/photo-1613977257363-707ba9348227?w=2000",
     description: "Exclusive penthouse with panoramic water views, floor-to-ceiling windows, and premium amenities.",
     features: ["Panoramic Views", "Private Elevator", "Smart Home", "Chef's Kitchen", "Wine Cellar"],
     nearbyPlaces: {
@@ -100,6 +104,7 @@ export const dummyProperties: Property[] = [
       "https://images.unsplash.com/photo-1515263487990-61b07816b324?w=800",
       "https://images.unsplash.com/photo-1554995207-c18c203602cb?w=800",
     ],
+    panoramaUrl: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=2000",
     description: "Charming studio loft in the heart of the arts district. High ceilings, exposed brick, and modern amenities.",
     features: ["Exposed Brick", "High Ceilings", "Natural Light", "Pet-Friendly", "Bike Storage"],
     nearbyPlaces: {

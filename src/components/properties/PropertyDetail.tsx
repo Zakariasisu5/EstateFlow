@@ -1,8 +1,11 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Property } from "@/data/dummyProperties";
 import PropertyGallery from "./PropertyGallery";
-import { MapPin, Bed, Bath, Maximize, Calendar, School, ShoppingBag, Bus, CheckCircle } from "lucide-react";
+import VirtualTourViewer from "@/components/tours/VirtualTourViewer";
+import PropertyMap from "@/components/maps/PropertyMap";
+import { MapPin, Bed, Bath, Maximize, Calendar, School, ShoppingBag, Bus, CheckCircle, Eye, Images, Map } from "lucide-react";
 
 interface PropertyDetailProps {
   property: Property | null;
@@ -22,7 +25,34 @@ const PropertyDetail = ({ property, open, onClose, onBookTour }: PropertyDetailP
         </DialogHeader>
 
         <div className="space-y-6">
-          <PropertyGallery images={property.images} title={property.title} />
+          <Tabs defaultValue="gallery" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="gallery" className="gap-2">
+                <Images className="w-4 h-4" />
+                Photos
+              </TabsTrigger>
+              <TabsTrigger value="tour" className="gap-2">
+                <Eye className="w-4 h-4" />
+                360° Tour
+              </TabsTrigger>
+              <TabsTrigger value="map" className="gap-2">
+                <Map className="w-4 h-4" />
+                Location
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="gallery" className="mt-4">
+              <PropertyGallery images={property.images} title={property.title} />
+            </TabsContent>
+            
+            <TabsContent value="tour" className="mt-4">
+              <VirtualTourViewer imageUrl={property.panoramaUrl} />
+            </TabsContent>
+            
+            <TabsContent value="map" className="mt-4">
+              <PropertyMap property={property} />
+            </TabsContent>
+          </Tabs>
 
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
@@ -77,7 +107,7 @@ const PropertyDetail = ({ property, open, onClose, onBookTour }: PropertyDetailP
             <div className="grid md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <div className="flex items-center gap-2 font-medium">
-                  <School className="w-4 h-4 text-primary" />
+                  <School className="w-4 h-4 text-blue-500" />
                   Schools
                 </div>
                 {property.nearbyPlaces.schools.map((school, index) => (
@@ -86,7 +116,7 @@ const PropertyDetail = ({ property, open, onClose, onBookTour }: PropertyDetailP
               </div>
               <div className="space-y-2">
                 <div className="flex items-center gap-2 font-medium">
-                  <ShoppingBag className="w-4 h-4 text-primary" />
+                  <ShoppingBag className="w-4 h-4 text-green-500" />
                   Shopping
                 </div>
                 {property.nearbyPlaces.malls.map((mall, index) => (
@@ -95,21 +125,13 @@ const PropertyDetail = ({ property, open, onClose, onBookTour }: PropertyDetailP
               </div>
               <div className="space-y-2">
                 <div className="flex items-center gap-2 font-medium">
-                  <Bus className="w-4 h-4 text-primary" />
+                  <Bus className="w-4 h-4 text-yellow-600" />
                   Transport
                 </div>
                 {property.nearbyPlaces.transport.map((transport, index) => (
                   <p key={index} className="text-sm text-muted-foreground">{transport}</p>
                 ))}
               </div>
-            </div>
-          </div>
-
-          <div className="bg-muted/50 rounded-xl p-4">
-            <h3 className="font-semibold mb-2">Location Map</h3>
-            <div className="h-64 bg-muted rounded-lg flex items-center justify-center text-muted-foreground">
-              <MapPin className="w-8 h-8 mr-2" />
-              Map placeholder - Ready for Google Maps integration
             </div>
           </div>
         </div>
