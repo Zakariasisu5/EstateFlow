@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Home } from "lucide-react";
+import { Send } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import MessageBubble from "./MessageBubble";
 import TypingIndicator from "./TypingIndicator";
 import QuickReplyButtons from "./QuickReplyButtons";
@@ -9,6 +10,7 @@ import PropertyCard from "@/components/properties/PropertyCard";
 import PropertyDetail from "@/components/properties/PropertyDetail";
 import BookingModal from "@/components/booking/BookingModal";
 import { dummyProperties, Property } from "@/data/dummyProperties";
+import { useRealtimeChat } from "@/hooks/useRealtimeChat";
 
 interface Message {
   id: string;
@@ -17,7 +19,14 @@ interface Message {
   timestamp: string;
 }
 
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 const ChatInterface = () => {
+  const { toast } = useToast();
+  const { streamChat, isStreaming } = useRealtimeChat();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -26,13 +35,14 @@ const ChatInterface = () => {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
+  const [conversationHistory, setConversationHistory] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
   const [showQuickReplies, setShowQuickReplies] = useState(true);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [showPropertyDetail, setShowPropertyDetail] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const currentBotMessageRef = useRef<string>('');
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -40,7 +50,7 @@ const ChatInterface = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isTyping]);
+  }, [messages, isStreaming]);
 
   const initialQuickReplies = [
     "🏢 Apartment",
@@ -59,146 +69,106 @@ const ChatInterface = () => {
     setMessages((prev) => [...prev, newMessage]);
   };
 
-  const handleBotResponse = (userMessage: string) => {
-    setIsTyping(true);
+  const handleBotResponse = async (userMessage: string) => {
     setShowQuickReplies(false);
+    currentBotMessageRef.current = '';
+    
+    // Add user message to conversation history
+    const newHistory: ChatMessage[] = [
+      ...conversationHistory,
+      { role: 'user', content: userMessage }
+    ];
+    setConversationHistory(newHistory);
 
-    setTimeout(() => {
-      setIsTyping(false);
+    // Create a temporary bot message that will be updated with streaming content
+    const botMessageId = Date.now().toString();
+    let botMessageContent = '';
+    let propertyIdsToShow: string[] = [];
 
-      if (userMessage.toLowerCase().includes("apartment") || userMessage.toLowerCase().includes("studio")) {
-        const apartmentProperties = dummyProperties.filter(p => 
-          p.title.toLowerCase().includes("apartment") || p.title.toLowerCase().includes("studio")
-        );
-        
-        addMessage(
-          "Great choice! Here are some beautiful apartments I found for you:",
-          true
-        );
-
-        setTimeout(() => {
-          addMessage(
-            <div className="space-y-3">
-              {apartmentProperties.map(property => (
-                <PropertyCard
-                  key={property.id}
-                  property={property}
-                  onViewDetails={() => {
-                    setSelectedProperty(property);
-                    setShowPropertyDetail(true);
-                  }}
-                  onBookTour={() => {
-                    setSelectedProperty(property);
-                    setShowBooking(true);
-                  }}
-                />
-              ))}
-            </div>,
-            true
+    const updateBotMessage = (content: string) => {
+      setMessages(prev => {
+        const lastMessage = prev[prev.length - 1];
+        if (lastMessage?.id === botMessageId && lastMessage.isBot) {
+          return prev.map(msg => 
+            msg.id === botMessageId 
+              ? { ...msg, text: content }
+              : msg
           );
-        }, 500);
-      } else if (userMessage.toLowerCase().includes("family") || userMessage.toLowerCase().includes("home")) {
-        const familyProperties = dummyProperties.filter(p => 
-          p.title.toLowerCase().includes("family") || p.bedrooms >= 3
-        );
-        
-        addMessage(
-          "Perfect for a family! Check out these spacious homes:",
-          true
-        );
+        }
+        return [
+          ...prev,
+          {
+            id: botMessageId,
+            text: content,
+            isBot: true,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          }
+        ];
+      });
+    };
 
-        setTimeout(() => {
-          addMessage(
-            <div className="space-y-3">
-              {familyProperties.map(property => (
-                <PropertyCard
-                  key={property.id}
-                  property={property}
-                  onViewDetails={() => {
-                    setSelectedProperty(property);
-                    setShowPropertyDetail(true);
-                  }}
-                  onBookTour={() => {
-                    setSelectedProperty(property);
-                    setShowBooking(true);
-                  }}
-                />
-              ))}
-            </div>,
-            true
+    await streamChat({
+      messages: newHistory,
+      onDelta: (chunk) => {
+        botMessageContent += chunk;
+        currentBotMessageRef.current = botMessageContent;
+        // Remove PROPERTIES: line from display
+        const displayContent = botMessageContent.replace(/PROPERTIES:\s*\[[\d,\s]+\]/g, '').trim();
+        updateBotMessage(displayContent);
+      },
+      onPropertyIds: (ids) => {
+        propertyIdsToShow = ids;
+      },
+      onDone: () => {
+        // Update conversation history with complete bot response
+        const finalContent = botMessageContent.replace(/PROPERTIES:\s*\[[\d,\s]+\]/g, '').trim();
+        setConversationHistory([
+          ...newHistory,
+          { role: 'assistant', content: finalContent }
+        ]);
+
+        // Show property cards if any were recommended
+        if (propertyIdsToShow.length > 0) {
+          const recommendedProperties = dummyProperties.filter(p => 
+            propertyIdsToShow.includes(p.id)
           );
-        }, 500);
-      } else if (userMessage.toLowerCase().includes("luxury") || userMessage.toLowerCase().includes("penthouse")) {
-        const luxuryProperties = dummyProperties.filter(p => 
-          p.title.toLowerCase().includes("luxury") || p.title.toLowerCase().includes("penthouse")
-        );
-        
-        addMessage(
-          "Excellent taste! Here are our premium luxury properties:",
-          true
-        );
 
-        setTimeout(() => {
-          addMessage(
-            <div className="space-y-3">
-              {luxuryProperties.map(property => (
-                <PropertyCard
-                  key={property.id}
-                  property={property}
-                  onViewDetails={() => {
-                    setSelectedProperty(property);
-                    setShowPropertyDetail(true);
-                  }}
-                  onBookTour={() => {
-                    setSelectedProperty(property);
-                    setShowBooking(true);
-                  }}
-                />
-              ))}
-            </div>,
-            true
-          );
-        }, 500);
-      } else {
-        addMessage(
-          "I'd love to help you find the perfect property! Here are all our available listings:",
-          true
-        );
-
-        setTimeout(() => {
-          addMessage(
-            <div className="space-y-3">
-              {dummyProperties.map(property => (
-                <PropertyCard
-                  key={property.id}
-                  property={property}
-                  onViewDetails={() => {
-                    setSelectedProperty(property);
-                    setShowPropertyDetail(true);
-                  }}
-                  onBookTour={() => {
-                    setSelectedProperty(property);
-                    setShowBooking(true);
-                  }}
-                />
-              ))}
-            </div>,
-            true
-          );
-        }, 500);
-      }
-
-      setTimeout(() => {
-        addMessage(
-          "Would you like to see more properties or schedule a tour? 😊",
-          true
-        );
-      }, 1000);
-    }, 1500);
+          setTimeout(() => {
+            addMessage(
+              <div className="space-y-3">
+                {recommendedProperties.map(property => (
+                  <PropertyCard
+                    key={property.id}
+                    property={property}
+                    onViewDetails={() => {
+                      setSelectedProperty(property);
+                      setShowPropertyDetail(true);
+                    }}
+                    onBookTour={() => {
+                      setSelectedProperty(property);
+                      setShowBooking(true);
+                    }}
+                  />
+                ))}
+              </div>,
+              true
+            );
+          }, 300);
+        }
+      },
+      onError: (error) => {
+        toast({
+          title: "Error",
+          description: error,
+          variant: "destructive",
+        });
+        updateBotMessage("I apologize, but I'm having trouble connecting right now. Please try again.");
+      },
+    });
   };
 
   const handleSend = () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || isStreaming) return;
 
     addMessage(inputValue, false);
     handleBotResponse(inputValue);
@@ -223,9 +193,9 @@ const ChatInterface = () => {
             />
           ))}
           
-          {isTyping && <TypingIndicator />}
+          {isStreaming && <TypingIndicator />}
           
-          {showQuickReplies && !isTyping && (
+          {showQuickReplies && !isStreaming && (
             <QuickReplyButtons options={initialQuickReplies} onSelect={handleQuickReply} />
           )}
           
@@ -244,7 +214,8 @@ const ChatInterface = () => {
             <Button
               onClick={handleSend}
               size="icon"
-              className="rounded-full bg-primary hover:bg-primary-dark shrink-0"
+              disabled={isStreaming}
+              className="rounded-full bg-primary hover:bg-primary-dark shrink-0 disabled:opacity-50"
             >
               <Send className="w-4 h-4" />
             </Button>
