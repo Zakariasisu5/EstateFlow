@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Home, MessageCircle } from "lucide-react";
 import LanguageSelector from "@/components/LanguageSelector";
 import ChatInterface from "@/components/chat/ChatInterface";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const Index = () => {
   const [showChat, setShowChat] = useState(false);
@@ -10,6 +11,7 @@ const Index = () => {
   if (showChat) {
     return (
       <div className="flex flex-col h-screen bg-background">
+        <ThemeToggle />
         <header className="border-b bg-card/50 backdrop-blur px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Home className="w-6 h-6 text-primary" />
@@ -24,6 +26,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-light via-background to-accent flex items-center justify-center p-4">
+      <ThemeToggle />
       <div className="max-w-lg w-full text-center space-y-8 animate-fade-in">
         <div className="space-y-4">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary text-primary-foreground shadow-lg animate-scale-in">
