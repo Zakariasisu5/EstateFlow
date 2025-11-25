@@ -30,7 +30,7 @@ const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      text: "Hello! I'm your Real Estate Concierge. 🏡 I'm here to help you find your dream home. What type of property are you looking for?",
+      text: "Hello! I'm your EstateFlow AI Concierge. 🌍 I'm here to help you find properties worldwide - from New York to Accra, London to Lagos! What are you looking for?",
       isBot: true,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
@@ -53,10 +53,10 @@ const ChatInterface = () => {
   }, [messages, isStreaming]);
 
   const initialQuickReplies = [
-    "🏢 Apartment",
-    "🏡 Family Home",
-    "✨ Luxury Property",
-    "🎨 Studio Loft",
+    "🇺🇸 Properties in US",
+    "🇬🇭 Properties in Ghana",
+    "🇬🇧 Properties in UK",
+    "🌍 Show all countries",
   ];
 
   const addMessage = (text: string | React.ReactNode, isBot: boolean) => {

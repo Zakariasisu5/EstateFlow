@@ -25,10 +25,15 @@ const PropertyCard = ({ property, onViewDetails, onBookTour }: PropertyCardProps
       
       <div className="p-4 space-y-3">
         <div>
-          <h3 className="font-semibold text-lg text-foreground mb-1">{property.title}</h3>
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <h3 className="font-semibold text-lg text-foreground">{property.title}</h3>
+            <span className="text-xl" title={property.country}>
+              {String.fromCodePoint(...[...property.countryCode.toUpperCase()].map(c => 127397 + c.charCodeAt(0)))}
+            </span>
+          </div>
           <div className="flex items-center text-muted-foreground text-sm">
             <MapPin className="w-4 h-4 mr-1" />
-            {property.location}
+            {property.city}, {property.country}
           </div>
         </div>
 
