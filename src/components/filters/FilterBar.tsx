@@ -51,11 +51,11 @@ const FilterBar = ({ onFilterChange }: FilterBarProps) => {
   const hasActiveFilters = selectedCountry !== "all" || selectedCity !== "all";
 
   return (
-    <div className="flex flex-wrap items-center gap-3 p-4 bg-card/50 backdrop-blur border-b border-border/50">
-      <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-        <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">🌍 Country:</span>
+    <div className="flex flex-col sm:flex-row flex-wrap items-center gap-3 p-3 sm:p-4 bg-card/50 backdrop-blur border-b border-border/50">
+      <div className="flex items-center gap-2 flex-1 min-w-[180px] sm:min-w-[200px] w-full sm:w-auto">
+        <span className="text-xs sm:text-sm font-medium text-muted-foreground whitespace-nowrap">🌍 Country:</span>
         <Select value={selectedCountry} onValueChange={handleCountryChange}>
-          <SelectTrigger className="flex-1 bg-background/50">
+          <SelectTrigger className="flex-1 bg-background/50 text-sm">
             <SelectValue placeholder="All Countries" />
           </SelectTrigger>
           <SelectContent>
@@ -69,10 +69,10 @@ const FilterBar = ({ onFilterChange }: FilterBarProps) => {
         </Select>
       </div>
 
-      <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-        <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">📍 City:</span>
+      <div className="flex items-center gap-2 flex-1 min-w-[180px] sm:min-w-[200px] w-full sm:w-auto">
+        <span className="text-xs sm:text-sm font-medium text-muted-foreground whitespace-nowrap">📍 City:</span>
         <Select value={selectedCity} onValueChange={handleCityChange}>
-          <SelectTrigger className="flex-1 bg-background/50">
+          <SelectTrigger className="flex-1 bg-background/50 text-sm">
             <SelectValue placeholder="All Cities" />
           </SelectTrigger>
           <SelectContent>
@@ -91,9 +91,9 @@ const FilterBar = ({ onFilterChange }: FilterBarProps) => {
           variant="ghost"
           size="sm"
           onClick={handleClearFilters}
-          className="text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground text-xs sm:text-sm w-full sm:w-auto"
         >
-          <X className="w-4 h-4 mr-1" />
+          <X className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
           Clear Filters
         </Button>
       )}

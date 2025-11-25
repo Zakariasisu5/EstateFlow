@@ -183,7 +183,7 @@ const ChatInterface = () => {
   return (
     <>
       <div className="flex flex-col h-full">
-        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
+        <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 sm:py-6 space-y-3 sm:space-y-4">
           {messages.map((message) => (
             <MessageBubble
               key={message.id}
@@ -202,22 +202,22 @@ const ChatInterface = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="border-t bg-background/95 backdrop-blur p-4">
+        <div className="border-t bg-background/95 backdrop-blur p-3 sm:p-4">
           <div className="flex gap-2">
             <Input
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
               placeholder="Ask me about properties..."
-              className="flex-1 rounded-full"
+              className="flex-1 rounded-full text-sm sm:text-base"
             />
             <Button
               onClick={handleSend}
               size="icon"
               disabled={isStreaming}
-              className="rounded-full bg-primary hover:bg-primary-dark shrink-0 disabled:opacity-50"
+              className="rounded-full bg-primary hover:bg-primary-dark shrink-0 disabled:opacity-50 w-9 h-9 sm:w-10 sm:h-10"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </Button>
           </div>
         </div>
