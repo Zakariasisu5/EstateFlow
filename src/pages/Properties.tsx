@@ -31,11 +31,11 @@ const Properties = () => {
     <div className="min-h-screen bg-background">
       <ThemeToggle />
       
-      <header className="border-b bg-card/50 backdrop-blur px-4 py-3 sticky top-0 z-10">
+      <header className="border-b bg-card/50 backdrop-blur px-3 sm:px-4 py-3 sticky top-0 z-10">
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Home className="w-6 h-6 text-primary" />
-            <h1 className="text-lg font-semibold">EstateFlow</h1>
+            <Home className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+            <h1 className="text-base sm:text-lg font-semibold">EstateFlow</h1>
           </div>
           <LanguageSelector />
         </div>
@@ -43,21 +43,21 @@ const Properties = () => {
 
       <FilterBar onFilterChange={setFilters} />
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-foreground mb-2">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <div className="mb-4 sm:mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">
             {filters.country !== "all" || filters.city !== "all"
               ? `Properties in ${filters.city !== "all" ? filters.city + ", " : ""}${filters.country !== "all" ? filters.country : "All Locations"}`
               : "All Properties Worldwide 🌍"}
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             {filteredProperties.length} {filteredProperties.length === 1 ? "property" : "properties"} available
           </p>
         </div>
 
         {filteredProperties.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-xl text-muted-foreground mb-4">
+          <div className="text-center py-12 sm:py-16 px-4">
+            <p className="text-lg sm:text-xl text-muted-foreground mb-4">
               No properties found with the selected filters
             </p>
             <Button
@@ -68,7 +68,7 @@ const Properties = () => {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {filteredProperties.map((property) => (
               <PropertyCard
                 key={property.id}
