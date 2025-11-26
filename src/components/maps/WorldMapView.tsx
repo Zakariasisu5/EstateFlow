@@ -79,6 +79,53 @@ const MapControls = () => {
   );
 };
 
+// Map content component that uses the map context
+const MapContent = () => {
+  return (
+    <>
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+      
+      <MarkerClusterGroup
+        chunkedLoading
+        maxClusterRadius={60}
+        spiderfyOnMaxZoom={true}
+        showCoverageOnHover={false}
+        zoomToBoundsOnClick={true}
+      >
+        {dummyProperties.map((property) => (
+          <Marker
+            key={property.id}
+            position={[property.coordinates.lat, property.coordinates.lng]}
+            icon={customIcon}
+          >
+            <Popup className="custom-popup">
+              <div className="p-2 max-w-[200px]">
+                <h3 className="mb-2 text-sm font-semibold text-foreground">
+                  {property.title}
+                </h3>
+                <p className="mb-1 text-xs text-muted-foreground">
+                  <strong>📍 {property.city}, {property.country}</strong>
+                </p>
+                <p className="mb-1 text-xs text-muted-foreground">
+                  <strong>💰 {property.price}</strong>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  🛏️ {property.bedrooms} beds | 🚿 {property.bathrooms} baths
+                </p>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+      </MarkerClusterGroup>
+
+      <MapControls />
+    </>
+  );
+};
+
 const WorldMapView = () => {
   return (
     <div className="relative w-full h-screen">
@@ -90,45 +137,7 @@ const WorldMapView = () => {
         maxBounds={[[-90, -180], [90, 180]]}
         maxBoundsViscosity={1.0}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        
-        <MarkerClusterGroup
-          chunkedLoading
-          maxClusterRadius={60}
-          spiderfyOnMaxZoom={true}
-          showCoverageOnHover={false}
-          zoomToBoundsOnClick={true}
-        >
-          {dummyProperties.map((property) => (
-            <Marker
-              key={property.id}
-              position={[property.coordinates.lat, property.coordinates.lng]}
-              icon={customIcon}
-            >
-              <Popup className="custom-popup">
-                <div className="p-2 max-w-[200px]">
-                  <h3 className="mb-2 text-sm font-semibold text-foreground">
-                    {property.title}
-                  </h3>
-                  <p className="mb-1 text-xs text-muted-foreground">
-                    <strong>📍 {property.city}, {property.country}</strong>
-                  </p>
-                  <p className="mb-1 text-xs text-muted-foreground">
-                    <strong>💰 {property.price}</strong>
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    🛏️ {property.bedrooms} beds | 🚿 {property.bathrooms} baths
-                  </p>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
-        </MarkerClusterGroup>
-
-        <MapControls />
+        <MapContent />
       </MapContainer>
 
       {/* Property Count */}
