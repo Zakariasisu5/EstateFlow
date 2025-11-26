@@ -1,243 +1,138 @@
-import { useEffect, useRef, useState } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import MarkerClusterGroup from "react-leaflet-cluster";
 import { dummyProperties } from "@/data/dummyProperties";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { MapPin, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
-import { MarkerClusterer } from "@googlemaps/markerclusterer";
+import { ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+import { useEffect } from "react";
 
-interface WindowWithInit extends Window {
-  initMap?: () => void;
-}
+// Fix for default marker icons in Leaflet
+import icon from "leaflet/dist/images/marker-icon.png";
+import iconShadow from "leaflet/dist/images/marker-shadow.png";
 
-const WorldMapView = () => {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const [map, setMap] = useState<any>(null);
-  const [localApiKey, setLocalApiKey] = useState("");
-  const [showApiKeyInput, setShowApiKeyInput] = useState(true);
-  const [mapError, setMapError] = useState(false);
-  const clustererRef = useRef<MarkerClusterer | null>(null);
+const DefaultIcon = L.icon({
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+});
 
-  const initializeMap = () => {
-    if (!localApiKey) return;
+L.Marker.prototype.options.icon = DefaultIcon;
 
-    const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${localApiKey}&callback=initMap`;
-    script.async = true;
-    script.defer = true;
+// Custom marker icon with primary color
+const customIcon = new L.Icon({
+  iconUrl: `data:image/svg+xml;base64,${btoa(`
+    <svg width="32" height="42" viewBox="0 0 32 42" xmlns="http://www.w3.org/2000/svg">
+      <path d="M16 0C7.163 0 0 7.163 0 16c0 11 16 26 16 26s16-15 16-26C32 7.163 24.837 0 16 0z" fill="#4db5ff"/>
+      <circle cx="16" cy="16" r="6" fill="white"/>
+    </svg>
+  `)}`,
+  iconSize: [32, 42],
+  iconAnchor: [16, 42],
+  popupAnchor: [0, -42],
+});
 
-    (window as WindowWithInit).initMap = () => {
-      createMap();
-    };
-
-    script.onerror = () => {
-      setMapError(true);
-    };
-
-    if (!document.querySelector(`script[src*="maps.googleapis.com"]`)) {
-      document.head.appendChild(script);
-    } else {
-      createMap();
-    }
-  };
-
-  const createMap = () => {
-    if (!mapRef.current || !window.google) return;
-
-    try {
-      const mapInstance = new window.google.maps.Map(mapRef.current, {
-        zoom: 2,
-        center: { lat: 20, lng: 0 },
-        mapTypeControl: true,
-        streetViewControl: false,
-        fullscreenControl: true,
-        zoomControl: true,
-        styles: [
-          {
-            featureType: "poi",
-            elementType: "labels",
-            stylers: [{ visibility: "off" }],
-          },
-        ],
-      });
-
-      setMap(mapInstance);
-
-      // Create markers for all properties
-      const markers = dummyProperties.map((property) => {
-        const marker = new window.google.maps.Marker({
-          position: property.coordinates,
-          map: mapInstance,
-          title: property.title,
-          icon: {
-            path: window.google.maps.SymbolPath.CIRCLE,
-            scale: 8,
-            fillColor: "#4db5ff",
-            fillOpacity: 0.9,
-            strokeColor: "#fff",
-            strokeWeight: 2,
-          },
-        });
-
-        // Info window for each property
-        const infoWindow = new window.google.maps.InfoWindow({
-          content: `
-            <div style="padding: 8px; max-width: 200px;">
-              <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #1f1f3b;">${property.title}</h3>
-              <p style="margin: 4px 0; font-size: 12px; color: #666;">
-                <strong>📍 ${property.city}, ${property.country}</strong>
-              </p>
-              <p style="margin: 4px 0; font-size: 12px; color: #666;">
-                <strong>💰 ${property.price}</strong>
-              </p>
-              <p style="margin: 4px 0; font-size: 12px; color: #666;">
-                🛏️ ${property.bedrooms} beds | 🚿 ${property.bathrooms} baths
-              </p>
-            </div>
-          `,
-        });
-
-        marker.addListener("click", () => {
-          infoWindow.open(mapInstance, marker);
-        });
-
-        return marker;
-      });
-
-      // Add marker clustering
-      clustererRef.current = new MarkerClusterer({
-        map: mapInstance,
-        markers,
-        algorithmOptions: {
-          maxZoom: 15,
-        },
-      });
-
-      setMapError(false);
-    } catch (error) {
-      console.error("Map creation error:", error);
-      setMapError(true);
-    }
-  };
-
-  useEffect(() => {
-    if (localApiKey && !showApiKeyInput) {
-      initializeMap();
-    }
-  }, [localApiKey, showApiKeyInput]);
+// Component for map controls
+const MapControls = () => {
+  const map = useMap();
 
   const handleZoomIn = () => {
-    if (map) {
-      map.setZoom(map.getZoom() + 1);
-    }
+    map.zoomIn();
   };
 
   const handleZoomOut = () => {
-    if (map) {
-      map.setZoom(map.getZoom() - 1);
-    }
+    map.zoomOut();
   };
 
   const handleResetView = () => {
-    if (map) {
-      map.setZoom(2);
-      map.setCenter({ lat: 20, lng: 0 });
-    }
+    map.setView([20, 0], 2);
   };
 
-  if (showApiKeyInput) {
-    return (
-      <div className="w-full h-screen flex items-center justify-center p-4">
-        <Alert className="max-w-md">
-          <MapPin className="h-4 w-4" />
-          <AlertDescription>
-            <p className="mb-4">
-              Please enter your Google Maps API key to view the world map.
-            </p>
-            <p className="mb-4 text-sm text-light">
-              Get your API key from{" "}
-              <a
-                href="https://console.cloud.google.com/google/maps-apis"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline"
-              >
-                Google Cloud Console
-              </a>
-            </p>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Input
-                type="text"
-                placeholder="Enter API key"
-                value={localApiKey}
-                onChange={(e) => setLocalApiKey(e.target.value)}
-                className="flex-1"
-              />
-              <Button
-                onClick={() => localApiKey && setShowApiKeyInput(false)}
-                disabled={!localApiKey}
-              >
-                Load Map
-              </Button>
-            </div>
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
+  return (
+    <div className="absolute top-4 right-4 flex flex-col gap-2 z-[1000]">
+      <Button
+        onClick={handleZoomIn}
+        size="icon"
+        className="bg-background hover:bg-background/90 text-primary shadow-lg border border-border"
+        title="Zoom In"
+      >
+        <ZoomIn className="h-4 w-4" />
+      </Button>
+      <Button
+        onClick={handleZoomOut}
+        size="icon"
+        className="bg-background hover:bg-background/90 text-primary shadow-lg border border-border"
+        title="Zoom Out"
+      >
+        <ZoomOut className="h-4 w-4" />
+      </Button>
+      <Button
+        onClick={handleResetView}
+        size="icon"
+        className="bg-background hover:bg-background/90 text-primary shadow-lg border border-border"
+        title="Reset View"
+      >
+        <Maximize2 className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+};
 
-  if (mapError) {
-    return (
-      <div className="w-full h-screen flex items-center justify-center p-4">
-        <Alert variant="destructive" className="max-w-md">
-          <AlertDescription>
-            <p className="mb-4">
-              Failed to load Google Maps. Please check your API key and try
-              again.
-            </p>
-            <Button onClick={() => setShowApiKeyInput(true)}>
-              Re-enter API Key
-            </Button>
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
+const WorldMapView = () => {
   return (
     <div className="relative w-full h-screen">
-      <div ref={mapRef} className="w-full h-full" />
-      
-      {/* Custom Controls */}
-      <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
-        <Button
-          onClick={handleZoomIn}
-          size="icon"
-          className="bg-white hover:bg-white/90 text-primary shadow-lg"
-          title="Zoom In"
+      <MapContainer
+        center={[20, 0]}
+        zoom={2}
+        className="w-full h-full"
+        zoomControl={false}
+        maxBounds={[[-90, -180], [90, 180]]}
+        maxBoundsViscosity={1.0}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        
+        <MarkerClusterGroup
+          chunkedLoading
+          maxClusterRadius={60}
+          spiderfyOnMaxZoom={true}
+          showCoverageOnHover={false}
+          zoomToBoundsOnClick={true}
         >
-          <ZoomIn className="h-4 w-4" />
-        </Button>
-        <Button
-          onClick={handleZoomOut}
-          size="icon"
-          className="bg-white hover:bg-white/90 text-primary shadow-lg"
-          title="Zoom Out"
-        >
-          <ZoomOut className="h-4 w-4" />
-        </Button>
-        <Button
-          onClick={handleResetView}
-          size="icon"
-          className="bg-white hover:bg-white/90 text-primary shadow-lg"
-          title="Reset View"
-        >
-          <Maximize2 className="h-4 w-4" />
-        </Button>
-      </div>
+          {dummyProperties.map((property) => (
+            <Marker
+              key={property.id}
+              position={[property.coordinates.lat, property.coordinates.lng]}
+              icon={customIcon}
+            >
+              <Popup className="custom-popup">
+                <div className="p-2 max-w-[200px]">
+                  <h3 className="mb-2 text-sm font-semibold text-foreground">
+                    {property.title}
+                  </h3>
+                  <p className="mb-1 text-xs text-muted-foreground">
+                    <strong>📍 {property.city}, {property.country}</strong>
+                  </p>
+                  <p className="mb-1 text-xs text-muted-foreground">
+                    <strong>💰 {property.price}</strong>
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    🛏️ {property.bedrooms} beds | 🚿 {property.bathrooms} baths
+                  </p>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+        </MarkerClusterGroup>
+
+        <MapControls />
+      </MapContainer>
 
       {/* Property Count */}
-      <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-3 z-10">
+      <div className="absolute bottom-4 left-4 bg-background rounded-lg shadow-lg p-3 z-[1000] border border-border">
         <p className="text-sm font-semibold text-primary">
           🌍 {dummyProperties.length} Properties Worldwide
         </p>
