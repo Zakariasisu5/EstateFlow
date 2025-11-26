@@ -1,11 +1,13 @@
+import { useEffect, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-import MarkerClusterGroup from "react-leaflet-cluster";
 import { dummyProperties } from "@/data/dummyProperties";
 import { Button } from "@/components/ui/button";
 import { ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import "leaflet/dist/leaflet.css";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import L from "leaflet";
-import { useEffect } from "react";
+import "leaflet.markercluster";
 
 // Fix for default marker icons in Leaflet
 import icon from "leaflet/dist/images/marker-icon.png";
@@ -79,51 +81,57 @@ const MapControls = () => {
   );
 };
 
-// Map content component that uses the map context
-const MapContent = () => {
-  return (
-    <>
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      
-      <MarkerClusterGroup
-        chunkedLoading
-        maxClusterRadius={60}
-        spiderfyOnMaxZoom={true}
-        showCoverageOnHover={false}
-        zoomToBoundsOnClick={true}
-      >
-        {dummyProperties.map((property) => (
-          <Marker
-            key={property.id}
-            position={[property.coordinates.lat, property.coordinates.lng]}
-            icon={customIcon}
-          >
-            <Popup className="custom-popup">
-              <div className="p-2 max-w-[200px]">
-                <h3 className="mb-2 text-sm font-semibold text-foreground">
-                  {property.title}
-                </h3>
-                <p className="mb-1 text-xs text-muted-foreground">
-                  <strong>📍 {property.city}, {property.country}</strong>
-                </p>
-                <p className="mb-1 text-xs text-muted-foreground">
-                  <strong>💰 {property.price}</strong>
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  🛏️ {property.bedrooms} beds | 🚿 {property.bathrooms} baths
-                </p>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
-      </MarkerClusterGroup>
+// Component to handle marker clustering
+const MarkerClusterGroup = () => {
+  const map = useMap();
 
-      <MapControls />
-    </>
-  );
+  useEffect(() => {
+    // Create marker cluster group
+    const markers = L.markerClusterGroup({
+      maxClusterRadius: 60,
+      spiderfyOnMaxZoom: true,
+      showCoverageOnHover: false,
+      zoomToBoundsOnClick: true,
+    });
+
+    // Add markers to cluster group
+    dummyProperties.forEach((property) => {
+      const marker = L.marker([property.coordinates.lat, property.coordinates.lng], {
+        icon: customIcon,
+      });
+
+      // Create popup content
+      const popupContent = `
+        <div style="padding: 8px; max-width: 200px;">
+          <h3 style="margin-bottom: 8px; font-size: 14px; font-weight: 600;">
+            ${property.title}
+          </h3>
+          <p style="margin: 4px 0; font-size: 12px;">
+            <strong>📍 ${property.city}, ${property.country}</strong>
+          </p>
+          <p style="margin: 4px 0; font-size: 12px;">
+            <strong>💰 ${property.price}</strong>
+          </p>
+          <p style="font-size: 12px;">
+            🛏️ ${property.bedrooms} beds | 🚿 ${property.bathrooms} baths
+          </p>
+        </div>
+      `;
+
+      marker.bindPopup(popupContent);
+      markers.addLayer(marker);
+    });
+
+    // Add cluster group to map
+    map.addLayer(markers);
+
+    // Cleanup on unmount
+    return () => {
+      map.removeLayer(markers);
+    };
+  }, [map]);
+
+  return null;
 };
 
 const WorldMapView = () => {
@@ -134,10 +142,18 @@ const WorldMapView = () => {
         zoom={2}
         className="w-full h-full"
         zoomControl={false}
-        maxBounds={[[-90, -180], [90, 180]]}
+        maxBounds={[
+          [-90, -180],
+          [90, 180],
+        ]}
         maxBoundsViscosity={1.0}
       >
-        <MapContent />
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <MarkerClusterGroup />
+        <MapControls />
       </MapContainer>
 
       {/* Property Count */}
