@@ -15,4 +15,17 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    // Optimize for production builds
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Split Leaflet into its own chunk for better caching
+          leaflet: ['leaflet'],
+        },
+      },
+    },
+    // Increase chunk size warning limit for maps
+    chunkSizeWarningLimit: 1000,
+  },
 }));
