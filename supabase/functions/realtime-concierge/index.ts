@@ -21,8 +21,8 @@ serve(async (req: Request) => {
    
     const ids = properties.map((p) => p.id).join(", ");
     const reply = ids
-      ? `AI integration removed. Available property IDs: ${ids}. How can I help you explore them?`
-      : "AI integration removed. No properties available. How can I help?";
+      ? `AI integration removed. Available property IDs: ${ids}.`
+      : "";
 
     return new Response(JSON.stringify({ role: "assistant", content: reply }), {
       status: 200,
