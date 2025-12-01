@@ -15,17 +15,21 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    include: ['leaflet'],
+    exclude: ['react-leaflet', 'react-leaflet-cluster'],
+  },
   build: {
-    // Optimize for production builds
+    target: 'esnext',
+    minify: 'esbuild',
+    sourcemap: false,
     rollupOptions: {
       output: {
         manualChunks: {
-          // Split Leaflet into its own chunk for better caching
           leaflet: ['leaflet'],
         },
       },
     },
-    // Increase chunk size warning limit for maps
     chunkSizeWarningLimit: 1000,
   },
 }));
