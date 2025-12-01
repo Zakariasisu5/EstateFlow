@@ -18,7 +18,7 @@ serve(async (req: Request) => {
       properties?: Property[];
     };
 
-    // Lovable integration removed. Return a local, helpful assistant response.
+   
     const ids = properties.map((p) => p.id).join(", ");
     const reply = ids
       ? `AI integration removed. Available property IDs: ${ids}. How can I help you explore them?`
