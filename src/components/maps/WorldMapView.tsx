@@ -19,6 +19,32 @@ const DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
+// Define custom icons at module level to avoid recreation
+const customIcon = L.icon({
+  iconUrl: `data:image/svg+xml;base64,${btoa(`
+    <svg width="32" height="42" viewBox="0 0 32 42" xmlns="http://www.w3.org/2000/svg">
+      <path d="M16 0C7.163 0 0 7.163 0 16c0 11 16 26 16 26s16-15 16-26C32 7.163 24.837 0 16 0z" fill="#4db5ff"/>
+      <circle cx="16" cy="16" r="6" fill="white"/>
+    </svg>
+  `)}`,
+  iconSize: [32, 42],
+  iconAnchor: [16, 42],
+  popupAnchor: [0, -42],
+});
+
+const highlightedIcon = L.icon({
+  iconUrl: `data:image/svg+xml;base64,${btoa(`
+    <svg width="40" height="52" viewBox="0 0 40 52" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20 0C8.954 0 0 8.954 0 20c0 13.75 20 32.5 20 32.5S40 33.75 40 20C40 8.954 31.046 0 20 0z" fill="#ff4d4d"/>
+      <circle cx="20" cy="20" r="8" fill="white"/>
+      <circle cx="20" cy="20" r="5" fill="#ff4d4d"/>
+    </svg>
+  `)}`,
+  iconSize: [40, 52],
+  iconAnchor: [20, 52],
+  popupAnchor: [0, -52],
+});
+
 const WorldMapView = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -47,33 +73,6 @@ const WorldMapView = () => {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(map);
-
-    // Custom marker icon
-    const customIcon = L.icon({
-      iconUrl: `data:image/svg+xml;base64,${btoa(`
-        <svg width="32" height="42" viewBox="0 0 32 42" xmlns="http://www.w3.org/2000/svg">
-          <path d="M16 0C7.163 0 0 7.163 0 16c0 11 16 26 16 26s16-15 16-26C32 7.163 24.837 0 16 0z" fill="#4db5ff"/>
-          <circle cx="16" cy="16" r="6" fill="white"/>
-        </svg>
-      `)}`,
-      iconSize: [32, 42],
-      iconAnchor: [16, 42],
-      popupAnchor: [0, -42],
-    });
-
-    // Highlighted marker icon
-    const highlightedIcon = L.icon({
-      iconUrl: `data:image/svg+xml;base64,${btoa(`
-        <svg width="40" height="52" viewBox="0 0 40 52" xmlns="http://www.w3.org/2000/svg">
-          <path d="M20 0C8.954 0 0 8.954 0 20c0 13.75 20 32.5 20 32.5S40 33.75 40 20C40 8.954 31.046 0 20 0z" fill="#ff4d4d"/>
-          <circle cx="20" cy="20" r="8" fill="white"/>
-          <circle cx="20" cy="20" r="5" fill="#ff4d4d"/>
-        </svg>
-      `)}`,
-      iconSize: [40, 52],
-      iconAnchor: [20, 52],
-      popupAnchor: [0, -52],
-    });
 
     // Add markers
     dummyProperties.forEach((property) => {
@@ -130,18 +129,6 @@ const WorldMapView = () => {
       setSelectedProperty(null);
       
       // Reset all markers to default icon
-      const customIcon = L.icon({
-        iconUrl: `data:image/svg+xml;base64,${btoa(`
-          <svg width="32" height="42" viewBox="0 0 32 42" xmlns="http://www.w3.org/2000/svg">
-            <path d="M16 0C7.163 0 0 7.163 0 16c0 11 16 26 16 26s16-15 16-26C32 7.163 24.837 0 16 0z" fill="#4db5ff"/>
-            <circle cx="16" cy="16" r="6" fill="white"/>
-          </svg>
-        `)}`,
-        iconSize: [32, 42],
-        iconAnchor: [16, 42],
-        popupAnchor: [0, -42],
-      });
-      
       markersRef.current.forEach(marker => marker.setIcon(customIcon));
     }
   };
@@ -150,33 +137,6 @@ const WorldMapView = () => {
     setSelectedProperty(property);
     
     if (!property || !mapInstanceRef.current) return;
-
-    // Create highlighted icon
-    const highlightedIcon = L.icon({
-      iconUrl: `data:image/svg+xml;base64,${btoa(`
-        <svg width="40" height="52" viewBox="0 0 40 52" xmlns="http://www.w3.org/2000/svg">
-          <path d="M20 0C8.954 0 0 8.954 0 20c0 13.75 20 32.5 20 32.5S40 33.75 40 20C40 8.954 31.046 0 20 0z" fill="#ff4d4d"/>
-          <circle cx="20" cy="20" r="8" fill="white"/>
-          <circle cx="20" cy="20" r="5" fill="#ff4d4d"/>
-        </svg>
-      `)}`,
-      iconSize: [40, 52],
-      iconAnchor: [20, 52],
-      popupAnchor: [0, -52],
-    });
-
-    // Default icon
-    const customIcon = L.icon({
-      iconUrl: `data:image/svg+xml;base64,${btoa(`
-        <svg width="32" height="42" viewBox="0 0 32 42" xmlns="http://www.w3.org/2000/svg">
-          <path d="M16 0C7.163 0 0 7.163 0 16c0 11 16 26 16 26s16-15 16-26C32 7.163 24.837 0 16 0z" fill="#4db5ff"/>
-          <circle cx="16" cy="16" r="6" fill="white"/>
-        </svg>
-      `)}`,
-      iconSize: [32, 42],
-      iconAnchor: [16, 42],
-      popupAnchor: [0, -42],
-    });
 
     // Reset all markers and highlight selected
     markersRef.current.forEach((marker, id) => {
