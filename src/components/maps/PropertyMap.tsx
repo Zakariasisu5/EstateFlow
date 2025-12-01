@@ -1,228 +1,110 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Property } from '@/data/dummyProperties';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { MapPin, School, ShoppingBag, Bus, AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-
-declare global {
-  interface Window {
-    google: typeof google;
-  }
-}
+import { MapPin, School, ShoppingBag, Bus } from 'lucide-react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 interface PropertyMapProps {
   property: Property;
-  apiKey?: string;
 }
 
-const PropertyMap = ({ property, apiKey }: PropertyMapProps) => {
+const PropertyMap = ({ property }: PropertyMapProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [localApiKey, setLocalApiKey] = useState(apiKey || '');
-  const [showApiKeyInput, setShowApiKeyInput] = useState(!apiKey);
-  const [mapError, setMapError] = useState(false);
-
-  const initializeMap = () => {
-    if (!mapRef.current || !localApiKey || mapError) return;
-
-    try {
-      // Load Google Maps script
-      if (!window.google) {
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${localApiKey}&libraries=places`;
-        script.async = true;
-        script.defer = true;
-        script.onerror = () => {
-          setMapError(true);
-        };
-        script.onload = () => {
-          createMap();
-        };
-        document.head.appendChild(script);
-      } else {
-        createMap();
-      }
-    } catch (error) {
-      setMapError(true);
-    }
-  };
-
-  const createMap = () => {
-    if (!mapRef.current || !window.google) return;
-
-    const newMap = new google.maps.Map(mapRef.current, {
-      center: property.coordinates,
-      zoom: 14,
-      mapTypeControl: true,
-      streetViewControl: true,
-      fullscreenControl: true,
-    });
-
-    setMap(newMap);
-
-    // Add property marker
-    new google.maps.Marker({
-      position: property.coordinates,
-      map: newMap,
-      title: property.title,
-      icon: {
-        url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
-        scaledSize: new google.maps.Size(40, 40),
-      },
-    });
-
-    // Add nearby schools markers
-    property.nearbyPlaces.schools.forEach((school, index) => {
-      const schoolCoords = {
-        lat: property.coordinates.lat + (Math.random() - 0.5) * 0.02,
-        lng: property.coordinates.lng + (Math.random() - 0.5) * 0.02,
-      };
-      
-      new google.maps.Marker({
-        position: schoolCoords,
-        map: newMap,
-        title: school,
-        icon: {
-          url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
-          scaledSize: new google.maps.Size(32, 32),
-        },
-      });
-    });
-
-    // Add nearby malls markers
-    property.nearbyPlaces.malls.forEach((mall, index) => {
-      const mallCoords = {
-        lat: property.coordinates.lat + (Math.random() - 0.5) * 0.02,
-        lng: property.coordinates.lng + (Math.random() - 0.5) * 0.02,
-      };
-      
-      new google.maps.Marker({
-        position: mallCoords,
-        map: newMap,
-        title: mall,
-        icon: {
-          url: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png',
-          scaledSize: new google.maps.Size(32, 32),
-        },
-      });
-    });
-
-    // Add transport markers
-    property.nearbyPlaces.transport.forEach((transport, index) => {
-      const transportCoords = {
-        lat: property.coordinates.lat + (Math.random() - 0.5) * 0.015,
-        lng: property.coordinates.lng + (Math.random() - 0.5) * 0.015,
-      };
-      
-      new google.maps.Marker({
-        position: transportCoords,
-        map: newMap,
-        title: transport,
-        icon: {
-          url: 'https://maps.google.com/mapfiles/ms/icons/yellow-dot.png',
-          scaledSize: new google.maps.Size(32, 32),
-        },
-      });
-    });
-  };
+  const mapInstanceRef = useRef<L.Map | null>(null);
 
   useEffect(() => {
-    if (localApiKey && !showApiKeyInput) {
-      initializeMap();
-    }
-  }, [localApiKey, showApiKeyInput]);
+    if (!mapRef.current || mapInstanceRef.current) return;
 
-  if (showApiKeyInput) {
-    return (
-      <div className="space-y-4">
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            To display interactive maps, you'll need a Google Maps API key. Get one from{' '}
-            <a
-              href="https://console.cloud.google.com/google/maps-apis"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary underline"
-            >
-              Google Cloud Console
-            </a>
-            . For production use, we recommend connecting to Lovable Cloud to store API keys securely.
-          </AlertDescription>
-        </Alert>
-        
-        <div className="flex gap-2">
-          <Input
-            type="text"
-            placeholder="Enter your Google Maps API key"
-            value={localApiKey}
-            onChange={(e) => setLocalApiKey(e.target.value)}
-            className="flex-1"
-          />
-          <Button
-            onClick={() => {
-              if (localApiKey) {
-                setShowApiKeyInput(false);
-                setMapError(false);
-              }
-            }}
-            disabled={!localApiKey}
-          >
-            Load Map
-          </Button>
-        </div>
+    // Fix Leaflet default marker icon issue
+    delete (L.Icon.Default.prototype as any)._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    });
 
-        <div className="bg-muted rounded-xl p-8 text-center space-y-4">
-          <MapPin className="w-12 h-12 mx-auto text-muted-foreground" />
-          <div>
-            <h3 className="font-semibold mb-2">Location Preview</h3>
-            <p className="text-sm text-muted-foreground">{property.location}</p>
-            <p className="text-xs text-muted-foreground mt-2">
-              Coordinates: {property.coordinates.lat.toFixed(4)}, {property.coordinates.lng.toFixed(4)}
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-3 gap-4 mt-6">
-            <div className="flex flex-col items-center gap-2">
-              <School className="w-6 h-6 text-blue-500" />
-              <span className="text-xs">🔵 Schools</span>
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <ShoppingBag className="w-6 h-6 text-green-500" />
-              <span className="text-xs">🟢 Shopping</span>
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <Bus className="w-6 h-6 text-yellow-600" />
-              <span className="text-xs">🟡 Transport</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+    // Create custom icons
+    const propertyIcon = L.divIcon({
+      className: 'custom-marker',
+      html: `<div style="background-color: #ef4444; width: 32px; height: 32px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>`,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+    });
 
-  if (mapError) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Failed to load Google Maps. Please check your API key and try again.
-          <Button
-            variant="link"
-            size="sm"
-            onClick={() => {
-              setShowApiKeyInput(true);
-              setMapError(false);
-            }}
-            className="ml-2"
-          >
-            Re-enter API key
-          </Button>
-        </AlertDescription>
-      </Alert>
-    );
-  }
+    const schoolIcon = L.divIcon({
+      className: 'custom-marker',
+      html: `<div style="background-color: #3b82f6; width: 24px; height: 24px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>`,
+      iconSize: [24, 24],
+      iconAnchor: [12, 12],
+    });
+
+    const mallIcon = L.divIcon({
+      className: 'custom-marker',
+      html: `<div style="background-color: #22c55e; width: 24px; height: 24px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>`,
+      iconSize: [24, 24],
+      iconAnchor: [12, 12],
+    });
+
+    const transportIcon = L.divIcon({
+      className: 'custom-marker',
+      html: `<div style="background-color: #eab308; width: 24px; height: 24px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>`,
+      iconSize: [24, 24],
+      iconAnchor: [12, 12],
+    });
+
+    // Initialize map with OpenStreetMap tiles (no API key needed!)
+    const map = L.map(mapRef.current).setView([property.coordinates.lat, property.coordinates.lng], 14);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19,
+    }).addTo(map);
+
+    // Add property marker
+    L.marker([property.coordinates.lat, property.coordinates.lng], { icon: propertyIcon })
+      .addTo(map)
+      .bindPopup(`<strong>${property.title}</strong><br>${property.location}`);
+
+    // Add nearby schools
+    property.nearbyPlaces.schools.forEach((school) => {
+      const schoolCoords: [number, number] = [
+        property.coordinates.lat + (Math.random() - 0.5) * 0.02,
+        property.coordinates.lng + (Math.random() - 0.5) * 0.02,
+      ];
+      L.marker(schoolCoords, { icon: schoolIcon })
+        .addTo(map)
+        .bindPopup(`<strong>School</strong><br>${school}`);
+    });
+
+    // Add nearby malls
+    property.nearbyPlaces.malls.forEach((mall) => {
+      const mallCoords: [number, number] = [
+        property.coordinates.lat + (Math.random() - 0.5) * 0.02,
+        property.coordinates.lng + (Math.random() - 0.5) * 0.02,
+      ];
+      L.marker(mallCoords, { icon: mallIcon })
+        .addTo(map)
+        .bindPopup(`<strong>Shopping</strong><br>${mall}`);
+    });
+
+    // Add transport
+    property.nearbyPlaces.transport.forEach((transport) => {
+      const transportCoords: [number, number] = [
+        property.coordinates.lat + (Math.random() - 0.5) * 0.015,
+        property.coordinates.lng + (Math.random() - 0.5) * 0.015,
+      ];
+      L.marker(transportCoords, { icon: transportIcon })
+        .addTo(map)
+        .bindPopup(`<strong>Transport</strong><br>${transport}`);
+    });
+
+    mapInstanceRef.current = map;
+
+    return () => {
+      map.remove();
+      mapInstanceRef.current = null;
+    };
+  }, [property]);
 
   return (
     <div className="space-y-4">
