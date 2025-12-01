@@ -10,15 +10,9 @@ const WorldMapView = () => {
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<Map<string, any>>(new Map());
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
-  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    // Ensure we're on the client side
-    setIsClient(true);
-  }, []);
-
-  useEffect(() => {
-    if (!isClient || !mapRef.current || mapInstanceRef.current) return;
+    if (!mapRef.current || mapInstanceRef.current) return;
 
     // Dynamic import of Leaflet to avoid SSR issues
     import("leaflet").then((L) => {
@@ -107,20 +101,19 @@ const WorldMapView = () => {
         marker.addTo(map);
         markersRef.current.set(property.id, marker);
       });
+      // Cleanup
+      return () => {
+        if (mapInstanceRef.current) {
+          markersRef.current.forEach((marker) => marker.remove());
+          markersRef.current.clear();
+          mapInstanceRef.current.remove();
+          mapInstanceRef.current = null;
+        }
+      };
     }).catch((error) => {
       console.error("Error loading Leaflet:", error);
     });
-
-    // Cleanup
-    return () => {
-      if (mapInstanceRef.current) {
-        markersRef.current.forEach((marker) => marker.remove());
-        markersRef.current.clear();
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-    };
-  }, [isClient]);
+  }, []);
 
   const handleZoomIn = () => {
     if (mapInstanceRef.current) {
@@ -184,13 +177,7 @@ const WorldMapView = () => {
         />
       </div>
 
-      <div ref={mapRef} className="w-full h-full">
-        {!isClient && (
-          <div className="flex items-center justify-center h-full bg-muted">
-            <p className="text-muted-foreground">Loading map...</p>
-          </div>
-        )}
-      </div>
+      <div ref={mapRef} className="w-full h-full" />
 
       {/* Custom Controls */}
       <div className="absolute top-4 right-4 flex flex-col gap-2 z-[1000]">
